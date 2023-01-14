@@ -1,4 +1,6 @@
 from enum import Enum
+import struct
+import array
 
 class _TciCommand:
 	def __init__(self, name, readable = True, writeable = True, has_rx = False, has_sub_rx = False, param_count = 1):
@@ -19,7 +21,8 @@ class _TciCommand:
 
 class TciEventType(Enum):
 	COMMAND = 0,
-	PARAM_CHANGED = 1
+	PARAM_CHANGED = 1,
+	DATA_RECEIVED = 2
 
 class TciEvent:
 	def __init__(self, cmd_info, event_type, rx = -1, sub_rx = -1):
@@ -31,22 +34,24 @@ class TciEvent:
 	def __repr__(self):
 		if self.event_type == TciEventType.COMMAND:
 			disp_type = "Command      "
-		else:
+		elif self.event_type == TciEventType.PARAM_CHANGED:
 			disp_type = "Param_Changed"
+		else:
+			return f"Data_Received: (RX{self.rx})      {self.cmd_info}"
 
 		if self.cmd_info.has_rx:
-			rx_spec = f" (RX{self.rx}"
+			rx_spec = f"(RX{self.rx}"
 			if self.cmd_info.has_sub_rx:
 				rx_spec += f", CH{self.sub_rx})"
 			else:
 				rx_spec += ")     "
 		else:
-			rx_spec = "           "
+			rx_spec = "          "
 
 		return f"{disp_type}: {rx_spec} {self.cmd_info.name}"
 
 	def get_value(self, param_dict):
-		if self.event_type == TciEventType.COMMAND:
+		if self.event_type != TciEventType.PARAM_CHANGED:
 			return None
 
 		if not self.cmd_info.has_rx:
@@ -149,3 +154,25 @@ _COMMANDS = {cmd.name: cmd for cmd in [
 	_TciCommand("AUDIO_STREAM_SAMPLE_TYPE"),
 	_TciCommand("AUDIO_STREAM_CHANNELS"),
 ]}
+
+class TciDataType(Enum):
+	IQ_STREAM = 0,
+	RX_AUDIO_STREAM = 1,
+	TX_AUDIO_STREAM = 2,
+	TX_CHRONO = 3
+
+class TciDataPacket:
+	def __init__(self, buf):
+		vals = struct.unpack_from("<7I", buf)
+		self.rx = vals[0]
+		self.sample_rate = vals[1]
+		self.format = vals[2]
+		self.codec = vals[3]
+		self.crc = vals[4]
+		self.length = vals[5]
+		self.data_type = vals[6]
+		offset = 7*4+9*4
+		if self.length:
+			self.data = array.array('f', buf[offset:])
+		else:
+			self.data = None

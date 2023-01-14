@@ -8,7 +8,10 @@ class Listener:
 
 	_tci_params = {"system":{}, "receivers":{}}
 	_tci_evts = None
+	_tci_send = None
+	_tci_data = None
 	_listen_task = None
+	_sender_task = None
 
 	def _convert_type(val):
 		try:
@@ -28,9 +31,15 @@ class Listener:
 
 		return val
 
-	async def _tci_status_rx(self, ws):
+	async def _listen_main(self, ws):
 		while True:
 			status = await ws.recv()
+			if type(status) is bytes:
+				packet = tci.TciDataPacket(status)
+				await self._tci_data.put(packet)
+				await self._tci_evts.put(tci.TciEvent(str(packet.data_type), tci.TciEventType.DATA_RECEIVED, packet.rx))
+				continue
+
 			parts = status.strip(";").split(":", 1)
 			cmd_name = parts[0].upper()
 			assert(cmd_name in tci._COMMANDS)
@@ -75,10 +84,18 @@ class Listener:
 			else:
 				await self._tci_evts.put(tci.TciEvent(cmd_info, tci.TciEventType.COMMAND))
 
-	async def _listen_main(self):
-		self._tci_evts = asyncio.Queue()
+	async def _sender_main(self, ws):
+		while True:
+			msg = await self._tci_send.get()
+			await ws.send(msg)
+
+	async def _launch_tasks(self):
 		async with websockets.connect(self.uri) as ws:
-			await self._tci_status_rx(ws)
+			self._listen_task = asyncio.create_task(self._listen_main(ws))
+			self._sender_task = asyncio.create_task(self._sender_main(ws))
+			done, pending = await asyncio.wait([self._listen_task, self._sender_task], return_when=asyncio.FIRST_COMPLETED)
+			for task in pending:
+				task.cancel()
 
 	def params(self):
 		return self._tci_params
@@ -86,6 +103,16 @@ class Listener:
 	def events(self):
 		return self._tci_evts
 
-	def start(self):
+	def data_packets(self):
+		return self._tci_data
+
+	def send_queue(self):
+		return self._tci_send
+
+	async def start(self):
 		if self._listen_task is None:
-			self._listen_task = asyncio.create_task(self._listen_main())
+			self._tci_evts = asyncio.Queue()
+			self._tci_send = asyncio.Queue()
+			self._tci_data = asyncio.Queue()
+			asyncio.create_task(self._launch_tasks())
+			await asyncio.sleep(0)

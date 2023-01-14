@@ -4,8 +4,7 @@ import json
 
 async def printer(uri):
 	tci_listener = Listener(uri)
-	tci_listener.start()
-	await asyncio.sleep(0)
+	await tci_listener.start()
 
 	event_queue = tci_listener.events()
 	params_dict = tci_listener.params()
