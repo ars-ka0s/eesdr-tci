@@ -7,7 +7,7 @@ class Listener:
 		self.uri = uri
 
 	_tci_params = {"system":{}, "receivers":{}}
-	_tci_cmds = None
+	_tci_evts = None
 	_listen_task = None
 
 	def _convert_type(val):
@@ -47,7 +47,7 @@ class Listener:
 					if len(cmd_params) == 1:
 						cmd_params = cmd_params[0]
 					self._tci_params["system"][cmd_info.name] = cmd_params
-					await self._tci_cmds.put((cmd_info.name, "system"))
+					await self._tci_evts.put(tci.TciEvent(cmd_info, tci.TciEventType.PARAM_CHANGED))
 					continue
 
 				param_rx = cmd_params.pop(0)
@@ -65,23 +65,26 @@ class Listener:
 						dest["channels"][param_sub_rx] = {}
 					dest = dest["channels"][param_sub_rx]
 
-				if len(cmd_params) == 1:
-					cmd_params = cmd_params[0]
-				dest[cmd_info.name] = cmd_params
-				await self._tci_cmds.put((cmd_info.name, "receivers", param_rx, param_sub_rx))
+				if len(cmd_params) != 0:
+					if len(cmd_params) == 1:
+						cmd_params = cmd_params[0]
+					dest[cmd_info.name] = cmd_params
+					await self._tci_evts.put(tci.TciEvent(cmd_info, tci.TciEventType.PARAM_CHANGED, param_rx, param_sub_rx))
+				else:
+					await self._tci_evts.put(tci.TciEvent(cmd_info, tci.TciEventType.COMMAND, param_rx, param_sub_rx))
 			else:
-				await self._tci_cmds.put((cmd_info.name, "command"))
+				await self._tci_evts.put(tci.TciEvent(cmd_info, tci.TciEventType.COMMAND))
 
 	async def _listen_main(self):
-		self._tci_cmds = asyncio.Queue()
+		self._tci_evts = asyncio.Queue()
 		async with websockets.connect(self.uri) as ws:
 			await self._tci_status_rx(ws)
 
 	def params(self):
 		return self._tci_params
 
-	def cmds(self):
-		return self._tci_cmds
+	def events(self):
+		return self._tci_evts
 
 	def start(self):
 		if self._listen_task is None:

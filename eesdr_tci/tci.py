@@ -17,6 +17,44 @@ class _TciCommand:
 			params += 1
 		return params
 
+class TciEventType(Enum):
+	COMMAND = 0,
+	PARAM_CHANGED = 1
+
+class TciEvent:
+	def __init__(self, cmd_info, event_type, rx = -1, sub_rx = -1):
+		self.cmd_info = cmd_info
+		self.event_type = event_type
+		self.rx = rx
+		self.sub_rx = sub_rx
+
+	def __repr__(self):
+		if self.event_type == TciEventType.COMMAND:
+			disp_type = "Command      "
+		else:
+			disp_type = "Param_Changed"
+
+		if self.cmd_info.has_rx:
+			rx_spec = f" (RX{self.rx}"
+			if self.cmd_info.has_sub_rx:
+				rx_spec += f", CH{self.sub_rx})"
+			else:
+				rx_spec += ")     "
+		else:
+			rx_spec = "           "
+
+		return f"{disp_type}: {rx_spec} {self.cmd_info.name}"
+
+	def get_value(self, param_dict):
+		if self.event_type == TciEventType.COMMAND:
+			return None
+
+		if not self.cmd_info.has_rx:
+			return param_dict["system"][self.cmd_info.name]
+		if not self.cmd_info.has_sub_rx:
+			return param_dict["receivers"][self.rx][self.cmd_info.name]
+		return param_dict["receivers"][self.rx]["channels"][self.sub_rx][self.cmd_info.name]
+
 _COMMANDS = {cmd.name: cmd for cmd in [
 	_TciCommand("CW_MACROS",             readable = False, has_rx = True),
 	_TciCommand("CW_MSG",                readable = False, has_rx = True, param_count = 3),

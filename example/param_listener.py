@@ -1,4 +1,5 @@
 from eesdr_tci.Listener import Listener
+from eesdr_tci.tci import TciEventType
 import asyncio
 import json
 
@@ -12,9 +13,10 @@ async def printer(uri):
 
 	while True:
 		evt = await event_queue.get()
-		if evt.cmd_info.name == "READY":
-			print(json.dumps(params_dict))
-			break
+		if evt.event_type == TciEventType.COMMAND:
+			print(evt)
+		else:
+			print(str(evt).ljust(60), evt.get_value(params_dict))
 
 with open("example_config.json", mode="r") as cf:
 	uri = json.load(cf)["uri"]
