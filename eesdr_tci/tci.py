@@ -20,8 +20,8 @@ class _TciCommand:
 		return params
 
 class TciEventType(Enum):
-	COMMAND = 0,
-	PARAM_CHANGED = 1,
+	COMMAND = 0
+	PARAM_CHANGED = 1
 	DATA_RECEIVED = 2
 
 class TciEvent:
@@ -156,9 +156,9 @@ _COMMANDS = {cmd.name: cmd for cmd in [
 ]}
 
 class TciDataType(Enum):
-	IQ_STREAM = 0,
-	RX_AUDIO_STREAM = 1,
-	TX_AUDIO_STREAM = 2,
+	IQ_STREAM = 0
+	RX_AUDIO_STREAM = 1
+	TX_AUDIO_STREAM = 2
 	TX_CHRONO = 3
 
 class TciDataPacket:
