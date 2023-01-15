@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 import struct
 import array
 
@@ -19,7 +19,7 @@ class _TciCommand:
 			params += 1
 		return params
 
-class TciEventType(Enum):
+class TciEventType(IntEnum):
 	COMMAND = 0
 	PARAM_CHANGED = 1
 	DATA_RECEIVED = 2
@@ -155,11 +155,17 @@ _COMMANDS = {cmd.name: cmd for cmd in [
 	_TciCommand("AUDIO_STREAM_CHANNELS"),
 ]}
 
-class TciDataType(Enum):
+class TciStreamType(IntEnum):
 	IQ_STREAM = 0
 	RX_AUDIO_STREAM = 1
 	TX_AUDIO_STREAM = 2
 	TX_CHRONO = 3
+
+class TciSampleType(IntEnum):
+	INT16 = 0
+	INT24 = 1
+	INT32 = 2
+	FLOAT32 = 3
 
 class TciDataPacket:
 	def __init__(self, rx, sample_rate, data_format, codec, crc, length, data_type, channels, data):
@@ -178,11 +184,11 @@ class TciDataPacket:
 		vals = struct.unpack_from("<8I", buf)
 		rx = vals[0]
 		sample_rate = vals[1]
-		data_format = vals[2]
+		data_format = TciSampleType(vals[2])
 		codec = vals[3]
 		crc = vals[4]
 		length = vals[5]
-		data_type = vals[6]
+		data_type = TciStreamType(vals[6])
 		channels = vals[7]
 		offset = 8*4+8*4
 		if length:
