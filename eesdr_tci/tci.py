@@ -162,17 +162,32 @@ class TciDataType(Enum):
 	TX_CHRONO = 3
 
 class TciDataPacket:
-	def __init__(self, buf):
+	def __init__(self, rx, sample_rate, data_format, codec, crc, length, data_type, data):
+		self.rx = rx
+		self.sample_rate = sample_rate
+		self.data_format = data_format
+		self.codec = codec
+		self.crc = crc
+		self.length = length
+		self.data_type = data_type
+		self.data = data
+
+	@classmethod
+	def from_buf(cls, buf):
 		vals = struct.unpack_from("<7I", buf)
-		self.rx = vals[0]
-		self.sample_rate = vals[1]
-		self.format = vals[2]
-		self.codec = vals[3]
-		self.crc = vals[4]
-		self.length = vals[5]
-		self.data_type = vals[6]
+		rx = vals[0]
+		sample_rate = vals[1]
+		data_format = vals[2]
+		codec = vals[3]
+		crc = vals[4]
+		length = vals[5]
+		data_type = vals[6]
 		offset = 7*4+9*4
-		if self.length:
-			self.data = array.array('f', buf[offset:])
+		if length:
+			data = array.array('f', buf[offset:])
 		else:
-			self.data = None
+			data = None
+		return cls(rx, sample_rate, data_format, codec, crc, length, data_type, data)
+	
+	def to_bytes(self):
+		return struct.pack(f"<7I36x{4*self.length}s", self.rx, self.sample_rate, self.data_format, self.codec, self.crc, self.length, self.data_type, self.data)

@@ -35,7 +35,7 @@ class Listener:
 		while True:
 			status = await ws.recv()
 			if type(status) is bytes:
-				packet = tci.TciDataPacket(status)
+				packet = tci.TciDataPacket.from_buf(status)
 				await self._tci_data.put(packet)
 				await self._tci_evts.put(tci.TciEvent(str(packet.data_type), tci.TciEventType.DATA_RECEIVED, packet.rx))
 				continue
