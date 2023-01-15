@@ -162,7 +162,7 @@ class TciDataType(Enum):
 	TX_CHRONO = 3
 
 class TciDataPacket:
-	def __init__(self, rx, sample_rate, data_format, codec, crc, length, data_type, data):
+	def __init__(self, rx, sample_rate, data_format, codec, crc, length, data_type, channels, data):
 		self.rx = rx
 		self.sample_rate = sample_rate
 		self.data_format = data_format
@@ -170,11 +170,12 @@ class TciDataPacket:
 		self.crc = crc
 		self.length = length
 		self.data_type = data_type
+		self.channels = channels
 		self.data = data
 
 	@classmethod
 	def from_buf(cls, buf):
-		vals = struct.unpack_from("<7I", buf)
+		vals = struct.unpack_from("<8I", buf)
 		rx = vals[0]
 		sample_rate = vals[1]
 		data_format = vals[2]
@@ -182,12 +183,13 @@ class TciDataPacket:
 		crc = vals[4]
 		length = vals[5]
 		data_type = vals[6]
-		offset = 7*4+9*4
+		channels = vals[7]
+		offset = 8*4+8*4
 		if length:
 			data = array.array('f', buf[offset:])
 		else:
 			data = None
-		return cls(rx, sample_rate, data_format, codec, crc, length, data_type, data)
+		return cls(rx, sample_rate, data_format, codec, crc, length, data_type, channels, data)
 	
 	def to_bytes(self):
-		return struct.pack(f"<7I36x{4*self.length}s", self.rx, self.sample_rate, self.data_format, self.codec, self.crc, self.length, self.data_type, self.data)
+		return struct.pack(f"<8I32x{4*self.length}s", self.rx, self.sample_rate, self.data_format, self.codec, self.crc, self.length, self.data_type, self.channels, self.data)
