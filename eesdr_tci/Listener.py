@@ -37,7 +37,7 @@ class Listener:
 			if type(status) is bytes:
 				packet = tci.TciDataPacket.from_buf(status)
 				await self._tci_data.put(packet)
-				await self._tci_evts.put(tci.TciEvent(str(packet.data_type), tci.TciEventType.DATA_RECEIVED, packet.rx))
+				await self._tci_evts.put(tci.TciEvent(tci.TciDataType(int(packet.data_type)).name, tci.TciEventType.DATA_RECEIVED, packet.rx))
 				continue
 
 			parts = status.strip(";").split(":", 1)
