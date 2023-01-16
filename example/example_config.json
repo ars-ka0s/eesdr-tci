@@ -1,5 +1,5 @@
 {
 	"uri": "ws://localhost:50001",
-	"sample_rate": 24000,
-	"sample_format_uint": true
+	"sample_rate": 8000,
+	"sample_format": 0
 }
