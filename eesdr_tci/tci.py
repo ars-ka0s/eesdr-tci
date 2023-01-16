@@ -213,10 +213,16 @@ class TciDataPacket:
 		channels = vals[7]
 		offset = 8*4+8*4
 		if length:
-			data = array.array('f', buf[offset:])
+			data = buf[offset:]
 		else:
 			data = None
 		return cls(rx, sample_rate, data_format, codec, crc, length, data_type, channels, data)
 	
 	def to_bytes(self):
-		return struct.pack(f"<8I32x{4*self.length}s", self.rx, self.sample_rate, self.data_format, self.codec, self.crc, self.length, self.data_type, self.channels, self.data)
+		if self.data_format == TciSampleType.INT16:
+			bytes_per_sample = 2
+		elif self.data_format == TciSampleType.INT24:
+			bytes_per_sample = 3
+		else:
+			bytes_per_sample = 4
+		return struct.pack(f"<8I32x{bytes_per_sample*self.length}s", self.rx, self.sample_rate, self.data_format, self.codec, self.crc, self.length, self.data_type, self.channels, self.data)
