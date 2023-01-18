@@ -1,5 +1,6 @@
+from eesdr_tci import tci
 from eesdr_tci.Listener import Listener
-from eesdr_tci.tci import TciEventType, TciStreamType, TciSampleType, TciDataPacket
+from eesdr_tci.tci import TciEventType, TciStreamType, TciSampleType, TciDataPacket, TciCommandSendAction
 import asyncio
 import json
 import sys
@@ -21,7 +22,7 @@ async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono
 	tx_buf = array.array('h')
 	while True:
 		await tx_data_received.wait()
-		await send_queue.put("TRX:0,true,tci")
+		await send_queue.put(tci.COMMANDS["TRX"].prepare_string(TciCommandSendAction.WRITE, rx=0, params=["true","tci"], check_params=False))
 		while True:
 			try:
 				await asyncio.wait_for(tx_chrono_queue.get(), timeout = 3.0)
@@ -47,7 +48,7 @@ async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono
 			await asyncio.sleep(0)
 			if buf_avail < SAMPLE_BUFSIZE:
 				break
-		await send_queue.put("TRX:0,false")
+		await send_queue.put(tci.COMMANDS["TRX"].prepare_string(TciCommandSendAction.WRITE, rx=0, params=["false"]))
 		while tx_chrono_queue.qsize() > 0:
 			await tx_chrono_queue.get()
 		tx_data_received.clear()
@@ -66,10 +67,10 @@ async def audio_receiver(uri, sample_rate):
 		evt = await event_queue.get()
 		if evt.event_type == TciEventType.COMMAND:
 			if evt.cmd_info.name == "READY":
-				await send_queue.put(f"AUDIO_SAMPLERATE:{sample_rate};")
-				await send_queue.put(f"AUDIO_STREAM_CHANNELS:1;")
-				await send_queue.put(f"AUDIO_STREAM_SAMPLE_TYPE:int16;")
-				await send_queue.put(f"AUDIO_STREAM_SAMPLES:{SAMPLE_BUFSIZE};")
+				await send_queue.put(tci.COMMANDS["AUDIO_SAMPLERATE"].prepare_string(TciCommandSendAction.WRITE, params=[sample_rate]))
+				await send_queue.put(tci.COMMANDS["AUDIO_STREAM_CHANNELS"].prepare_string(TciCommandSendAction.WRITE, params=[1]))
+				await send_queue.put(tci.COMMANDS["AUDIO_STREAM_SAMPLE_TYPE"].prepare_string(TciCommandSendAction.WRITE, params=["int16"]))
+				await send_queue.put(tci.COMMANDS["AUDIO_STREAM_SAMPLES"].prepare_string(TciCommandSendAction.WRITE, params=[SAMPLE_BUFSIZE]))
 				ready = True
 
 	ready = False
@@ -95,7 +96,7 @@ async def audio_receiver(uri, sample_rate):
 	transmit_sender_task = asyncio.create_task(transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono_queue))
 	await asyncio.sleep(0)
 
-	await send_queue.put("AUDIO_START:0;")
+	await send_queue.put(tci.COMMANDS["AUDIO_START"].prepare_string(TciCommandSendAction.WRITE, rx=0))
 
 	while True:
 		evt = await event_queue.get()

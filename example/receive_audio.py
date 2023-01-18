@@ -2,8 +2,9 @@
 # (with sample_format=0, sample_rate=8000)  python receive_audio.py | ffplay -nodisp -ar 8000  -f s16le -ac 2 -
 # (with sample_format=3, sample_rate=48000) python receive_audio.py | ffplay -nodisp -ar 48000 -f f32le -ac 2 -
 
+from eesdr_tci import tci
 from eesdr_tci.Listener import Listener
-from eesdr_tci.tci import TciEventType, TciSampleType
+from eesdr_tci.tci import TciEventType, TciSampleType, TciCommandSendAction
 import asyncio
 import json
 import sys
@@ -23,8 +24,8 @@ async def audio_receiver(uri, sample_rate, sample_fmt):
 		evt = await event_queue.get()
 		if evt.event_type == TciEventType.COMMAND:
 			if evt.cmd_info.name == "READY":
-				await send_queue.put(f"AUDIO_SAMPLERATE:{sample_rate};")
-				await send_queue.put(f"AUDIO_STREAM_SAMPLE_TYPE:{sample_fmt.name.lower()};")
+				await send_queue.put(tci.COMMANDS["AUDIO_SAMPLERATE"].prepare_string(TciCommandActionType.WRITE, params=[sample_rate]))
+				await send_queue.put(tci.COMMANDS["AUDIO_STREAM_SAMPLE_TYPE"].prepare_string(TciCommandActionType.WRITE, params=[sample_fmt.name.lower()]))
 				ready = True
 
 	ready = False
@@ -37,7 +38,7 @@ async def audio_receiver(uri, sample_rate, sample_fmt):
 				assert(evt.get_value(params_dict) == sample_fmt.name.lower())
 				ready = True
 
-	await send_queue.put("AUDIO_START:0;")
+	await send_queue.put(tci.COMMANDS["AUDIO_START"].prepare_string(TciCommandActionType.WRITE, rx=0))
 
 	while True:
 		evt = await event_queue.get()
