@@ -17,15 +17,14 @@ async def transmit_receiver(stream, event, queue):
 		await queue.put(array.array("h", dat))
 		event.set()
 
-async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono_event):
+async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono_queue):
 	tx_buf = array.array('h')
 	while True:
 		await tx_data_received.wait()
 		await send_queue.put("TRX:0,true,tci")
 		while True:
 			try:
-				await asyncio.wait_for(tx_chrono_event.wait(), timeout = 3.0)
-				tx_chrono_event.clear()
+				await asyncio.wait_for(tx_chrono_queue.get(), timeout = 3.0)
 			except asyncio.exceptions.TimeoutError:
 				print("Unexpected no chrono packet")
 				break
@@ -49,6 +48,8 @@ async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono
 			if buf_avail < SAMPLE_BUFSIZE:
 				break
 		await send_queue.put("TRX:0,false")
+		while tx_chrono_queue.qsize() > 0:
+			await tx_chrono_queue.get()
 		tx_data_received.clear()
 
 async def audio_receiver(uri, sample_rate):
@@ -90,8 +91,8 @@ async def audio_receiver(uri, sample_rate):
 	tx_data_queue = asyncio.Queue()
 	tx_data_received = asyncio.Event()
 	transmit_listen_task = asyncio.create_task(transmit_receiver(dw_proc.stdout, tx_data_received, tx_data_queue))
-	tx_chrono_event = asyncio.Event()
-	transmit_sender_task = asyncio.create_task(transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono_event))
+	tx_chrono_queue = asyncio.Queue()
+	transmit_sender_task = asyncio.create_task(transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono_queue))
 	await asyncio.sleep(0)
 
 	await send_queue.put("AUDIO_START:0;")
@@ -109,7 +110,7 @@ async def audio_receiver(uri, sample_rate):
 			await dw_proc.stdin.drain()
 		if evt.cmd_info == "TX_CHRONO":
 			packet = await data_queue.get()
-			tx_chrono_event.set()
+			await tx_chrono_queue.put(0)
 
 with open("example_config.json", mode="r") as cf:
 	cfg = json.load(cf)
