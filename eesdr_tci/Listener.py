@@ -42,9 +42,9 @@ class Listener:
 
 			parts = status.strip(";").split(":", 1)
 			cmd_name = parts[0].upper()
-			assert(cmd_name in tci._COMMANDS)
+			assert(cmd_name in tci.COMMANDS)
 
-			cmd_info = tci._COMMANDS[cmd_name]
+			cmd_info = tci.COMMANDS[cmd_name]
 			expected_params = cmd_info.total_params()
 			if expected_params != 0:
 				assert(len(parts) == 2)
