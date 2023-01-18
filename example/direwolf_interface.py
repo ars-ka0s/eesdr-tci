@@ -5,13 +5,15 @@ import json
 import sys
 import array
 
+SAMPLE_BUFSIZE = 2048
+
 async def data_printer(stream):
 	async for d in stream:
 		print(d.decode('utf-8'), end='')
 
 async def transmit_receiver(stream, event, queue):
 	while True:
-		dat = await stream.read(2048)
+		dat = await stream.read(2*SAMPLE_BUFSIZE)
 		await queue.put(array.array("h", dat))
 		event.set()
 
@@ -27,9 +29,9 @@ async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono
 			except asyncio.exceptions.TimeoutError:
 				print("Unexpected no chrono packet")
 				break
-			packet = TciDataPacket(0, 24000, TciSampleType.INT16, 0, 0, 1024, TciStreamType.TX_AUDIO_STREAM, 1, None)
-			buf_avail = 1024
-			while len(tx_buf) < 1024:
+			packet = TciDataPacket(0, 24000, TciSampleType.INT16, 0, 0, SAMPLE_BUFSIZE, TciStreamType.TX_AUDIO_STREAM, 1, None)
+			buf_avail = SAMPLE_BUFSIZE
+			while len(tx_buf) < SAMPLE_BUFSIZE:
 				try:
 					dat = await asyncio.wait_for(tx_data_queue.get(), timeout=0.1)
 					tx_buf += dat
@@ -44,7 +46,7 @@ async def transmit_sender(send_queue, tx_data_received, tx_data_queue, tx_chrono
 				tx_buf = array.array('h')
 			await send_queue.put(packet.to_bytes())
 			await asyncio.sleep(0)
-			if buf_avail < 1024:
+			if buf_avail < SAMPLE_BUFSIZE:
 				break
 		await send_queue.put("TRX:0,false")
 		tx_data_received.clear()
@@ -66,6 +68,7 @@ async def audio_receiver(uri, sample_rate):
 				await send_queue.put(f"AUDIO_SAMPLERATE:{sample_rate};")
 				await send_queue.put(f"AUDIO_STREAM_CHANNELS:1;")
 				await send_queue.put(f"AUDIO_STREAM_SAMPLE_TYPE:int16;")
+				await send_queue.put(f"AUDIO_STREAM_SAMPLES:{SAMPLE_BUFSIZE};")
 				ready = True
 
 	ready = False
@@ -78,6 +81,8 @@ async def audio_receiver(uri, sample_rate):
 				assert(evt.get_value(params_dict) == 1)
 			elif evt.cmd_info.name == "AUDIO_STREAM_SAMPLE_TYPE":
 				assert(evt.get_value(params_dict) == "int16")
+			elif evt.cmd_info.name == "AUDIO_STREAM_SAMPLES":
+				assert(evt.get_value(params_dict) == SAMPLE_BUFSIZE)
 				ready = True
 
 	dw_proc = await asyncio.create_subprocess_exec("./direwolf-stdout", "-O", stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
