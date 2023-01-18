@@ -19,6 +19,43 @@ class _TciCommand:
 			params += 1
 		return params
 
+	def prepare_string(self, action, rx = None, sub_rx = None, params = [], check_params = True):
+		uc_command = self.name.upper()
+
+		if action == TciCommandSendAction.READ and not self.readable:
+			raise ValueError(f"Command {command} not readable.")
+
+		if action == TciCommandSendAction.WRITE and not self.writeable:
+			raise ValueError(f"Command {command} not writeable.")
+
+		if self.has_rx and (rx is None or type(rx) is not int or rx < 0):
+			raise ValueError(f"Command {command} requires specifying applicable receiver number (positive integer)")
+
+		if self.has_sub_rx and (sub_rx is None or type(sub_rx) is not int or sub_rx < 0):
+			raise ValueError(f"Command {command} requires specifying applicable sub-receiver/channel number (positive integer)")
+
+		if check_params:
+			if action == TciCommandSendAction.READ and self.param_count > 0:
+				expected = self.param_count - 1
+			else:
+				expected = self.param_count
+
+			if len(params) != expected:
+				raise ValueError(f"Command {command} requires {expected} additional parameters to {action.name}, {len(params)} given.")
+
+		cmd_params = []
+		if self.has_rx:
+			cmd_params += [str(rx)]
+		if self.has_sub_rx:
+			cmd_params += [str(sub_rx)]
+		cmd_params += [str(p) for p in params]
+
+		if len(cmd_params) == 0:
+			return f"{uc_command};"
+		else:
+			param_str = ",".join(cmd_params)
+			return f"{uc_command}:{param_str};"
+
 class TciEventType(IntEnum):
 	COMMAND = 0
 	PARAM_CHANGED = 1
@@ -74,8 +111,8 @@ _COMMANDS = {cmd.name: cmd for cmd in [
 	_TciCommand("READY",                   readable = False, writeable = False, param_count = 0),
 	# Bidirectional Control Commands - TCI Protocol 1.9 - Section 5.2
 	# All these should be readable = True, writeable = True
-	_TciCommand("START",                   param_count = 0),
-	_TciCommand("STOP",                    param_count = 0),
+	_TciCommand("START",                   readable = False, param_count = 0),
+	_TciCommand("STOP",                    readable = False, param_count = 0),
 	_TciCommand("DDS",                     has_rx = True),
 	_TciCommand("IF",                      has_rx = True, has_sub_rx = True),
 	_TciCommand("VFO",                     has_rx = True, has_sub_rx = True),
@@ -175,6 +212,10 @@ _COMMANDS = {cmd.name: cmd for cmd in [
 	_TciCommand("TX_POWER",                writeable = False),
 	_TciCommand("TX_SWR",                  writeable = False),
 ]}
+
+class TciCommandSendAction(IntEnum):
+	READ = 0
+	WRITE = 1
 
 class TciStreamType(IntEnum):
 	IQ_STREAM = 0
