@@ -1,5 +1,8 @@
 {
 	"uri": "ws://localhost:50001",
 	"sample_rate": 8000,
-	"sample_format": 0
+	"sample_format": 0,
+	"saved_stations_file": "stations.sbj",
+	"spot_color": "#AA2222",
+	"respot_time": 60
 }

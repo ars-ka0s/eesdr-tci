@@ -1,0 +1,14 @@
+{
+    "0": {
+        "comment": "EX4MPL [Local]",
+        "ctcss": true,
+        "ctcssMode": 0,
+        "ctcssRxIndex": 21,
+        "ctcssTxIndex": 21,
+        "editComment": false,
+        "freq": 147200000,
+        "modulation": "NFM",
+        "repeater": true,
+        "repeaterOffset": 600000
+    }
+}
