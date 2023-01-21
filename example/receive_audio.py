@@ -4,47 +4,51 @@
 
 from eesdr_tci import tci
 from eesdr_tci.Listener import Listener
-from eesdr_tci.tci import TciEventType, TciSampleType, TciCommandSendAction
+from eesdr_tci.tci import TciSampleType, TciCommandSendAction, TciStreamType
 import asyncio
 import json
 import sys
 import array
 
+tci_listener = None
+sr_verified = None
+sst_verified = None
+
+async def verify_response(command, rx, subrx, param):
+	if command == "AUDIO_SAMPLERATE":
+		assert(param == sample_rate)
+		sr_verified.set()
+	elif command == "AUDIO_STREAM_SAMPLE_TYPE":
+		assert(param == sample_fmt.name.lower())
+		sst_verified.set()
+
+async def receive_data(packet):
+	sys.stdout.buffer.write(packet.data)
+
 async def audio_receiver(uri, sample_rate, sample_fmt):
+	global tci_listener, sr_verified, sst_verified
+
 	tci_listener = Listener(uri)
+	sr_verified = asyncio.Event()
+	sst_verified = asyncio.Event()
+
 	await tci_listener.start()
+	await tci_listener.ready()
 
-	event_queue = tci_listener.events()
-	params_dict = tci_listener.params()
-	send_queue =  tci_listener.send_queue()
-	data_queue =  tci_listener.data_packets()
+	tci_listener.add_param_listener("AUDIO_SAMPLERATE", verify_response)
+	tci_listener.add_param_listener("AUDIO_STREAM_SAMPLE_TYPE", verify_response)
 
-	ready = False
-	while not ready:
-		evt = await event_queue.get()
-		if evt.event_type == TciEventType.COMMAND:
-			if evt.cmd_info.name == "READY":
-				await send_queue.put(tci.COMMANDS["AUDIO_SAMPLERATE"].prepare_string(TciCommandActionType.WRITE, params=[sample_rate]))
-				await send_queue.put(tci.COMMANDS["AUDIO_STREAM_SAMPLE_TYPE"].prepare_string(TciCommandActionType.WRITE, params=[sample_fmt.name.lower()]))
-				ready = True
+	await tci_listener.send(tci.COMMANDS["AUDIO_SAMPLERATE"].prepare_string(TciCommandSendAction.WRITE, params=[sample_rate]))
+	await tci_listener.send(tci.COMMANDS["AUDIO_STREAM_SAMPLE_TYPE"].prepare_string(TciCommandSendAction.WRITE, params=[sample_fmt.name.lower()]))
 
-	ready = False
-	while not ready:
-		evt = await event_queue.get()
-		if evt.event_type == TciEventType.PARAM_CHANGED:
-			if evt.cmd_info.name == "AUDIO_SAMPLERATE":
-				assert(evt.get_value(params_dict) == sample_rate)
-			elif evt.cmd_info.name == "AUDIO_STREAM_SAMPLE_TYPE":
-				assert(evt.get_value(params_dict) == sample_fmt.name.lower())
-				ready = True
+	await sr_verified.wait()
+	await sst_verified.wait()
 
-	await send_queue.put(tci.COMMANDS["AUDIO_START"].prepare_string(TciCommandActionType.WRITE, rx=0))
+	tci_listener.add_data_listener(TciStreamType.RX_AUDIO_STREAM, receive_data)
 
-	while True:
-		evt = await event_queue.get()
-		if evt.event_type == TciEventType.DATA_RECEIVED:
-			packet = await data_queue.get()
-			sys.stdout.buffer.write(packet.data)
+	await tci_listener.send(tci.COMMANDS["AUDIO_START"].prepare_string(TciCommandSendAction.WRITE, rx=0))
+
+	await tci_listener.wait()
 
 with open("example_config.json", mode="r") as cf:
 	cfg = json.load(cf)

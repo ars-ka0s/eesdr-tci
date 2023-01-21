@@ -4,7 +4,7 @@
 
 from eesdr_tci.Listener import Listener
 from eesdr_tci import tci
-from eesdr_tci.tci import TciEventType, TciCommandSendAction
+from eesdr_tci.tci import TciCommandSendAction
 import json
 import asyncio
 from datetime import datetime
@@ -22,21 +22,13 @@ def get_cfg(cfg, prop, default=None, required=False):
 async def main(uri, spot_params, respot_time):
 	tci_listener = Listener(uri)
 	await tci_listener.start()
+	await tci_listener.ready()
 
-	event_queue = tci_listener.events()
-	send_queue = tci_listener.send_queue()
-
-	ready = False
-	while not ready:
-		evt = await event_queue.get()
-		if evt.event_type == TciEventType.COMMAND:
-			if evt.cmd_info.name == "READY":
-				ready = True
-
+	ready = True
 	while ready:
 		print(datetime.now().ctime())
 		for p in spot_params:
-			await send_queue.put(tci.COMMANDS["SPOT"].prepare_string(TciCommandSendAction.WRITE, params=p))
+			await tci_listener.send(tci.COMMANDS["SPOT"].prepare_string(TciCommandSendAction.WRITE, params=p))
 		print(f"Spotting {p[0]}")
 
 		if respot_time:

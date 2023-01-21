@@ -1,21 +1,23 @@
 from eesdr_tci.Listener import Listener
-from eesdr_tci.tci import TciEventType
 import asyncio
 import json
 
+ready = False
+squelch = 0
+
+async def print_params(name, rx, subrx, params):
+	print(f'{name.ljust(40)} {" " if rx is None else rx} {" " if subrx is None else subrx}   {params}')
+	if name == "READY":
+		ready = True
+
 async def printer(uri):
 	tci_listener = Listener(uri)
+
+	tci_listener.add_param_listener("*", print_params)
+
 	await tci_listener.start()
-
-	event_queue = tci_listener.events()
-	params_dict = tci_listener.params()
-
-	while True:
-		evt = await event_queue.get()
-		if evt.event_type == TciEventType.COMMAND:
-			print(evt)
-		else:
-			print(str(evt).ljust(60), evt.get_value(params_dict))
+	await tci_listener.ready()
+	await tci_listener.wait()
 
 with open("example_config.json", mode="r") as cf:
 	uri = json.load(cf)["uri"]
