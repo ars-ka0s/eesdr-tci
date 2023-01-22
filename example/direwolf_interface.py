@@ -1,8 +1,8 @@
 from eesdr_tci import tci
 from eesdr_tci.Listener import Listener
 from eesdr_tci.tci import TciStreamType, TciSampleType, TciDataPacket, TciCommandSendAction
+from config import Config
 import asyncio
-import json
 import sys
 import array
 import functools
@@ -130,19 +130,9 @@ async def audio_receiver(uri, sample_rate):
 
 	await tci_listener.wait()
 
-
-with open("example_config.json", mode="r") as cf:
-	cfg = json.load(cf)
-
-try:
-	uri = cfg["uri"]
-except:
-	print("TCI Websocket URI must be specified in example_config.json.")
-	exit(1)
-
-sample_rate = 8000
-if "sample_rate" in cfg:
-	sample_rate = cfg["sample_rate"]
+cfg = Config("example_config.json")
+uri = cfg.get("uri", required=True)
+sample_rate = cfg.get("sample_rate", default=8000)
 
 print(f"Connecting to {uri} and using sample_rate of {sample_rate} on 1 channel. Make sure this matches direwolf below (set using ARATE/ACHANNELS in direwolf.conf).")
 asyncio.run(audio_receiver(uri, sample_rate))

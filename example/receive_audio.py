@@ -5,8 +5,8 @@
 from eesdr_tci import tci
 from eesdr_tci.Listener import Listener
 from eesdr_tci.tci import TciSampleType, TciCommandSendAction, TciStreamType
+from config import Config
 import asyncio
-import json
 import sys
 import array
 
@@ -50,22 +50,10 @@ async def audio_receiver(uri, sample_rate, sample_fmt):
 
 	await tci_listener.wait()
 
-with open("example_config.json", mode="r") as cf:
-	cfg = json.load(cf)
-
-try:
-	uri = cfg["uri"]
-except:
-	print("TCI Websocket URI must be specified in example_config.json.")
-	exit(1)
-
-sample_rate = 8000
-if "sample_rate" in cfg:
-	sample_rate = cfg["sample_rate"]
-
-sample_fmt = TciSampleType.INT16
-if "sample_format" in cfg:
-	sample_fmt = TciSampleType(cfg["sample_format"])
+cfg = Config("example_config.json")
+uri = cfg.get("uri", required=True)
+sample_rate = cfg.get("sample_rate", default=8000)
+sample_fmt = TciSampleType(cfg.get("sample_format", default=TciSampleType.INT16.value))
 
 print(f"Connecting to {uri}", file=sys.stderr)
 print(f"Using sample rate {sample_rate}, and sample_format {sample_fmt.name}.", file=sys.stderr)

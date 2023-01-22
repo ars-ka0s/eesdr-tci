@@ -5,19 +5,10 @@
 from eesdr_tci.Listener import Listener
 from eesdr_tci import tci
 from eesdr_tci.tci import TciCommandSendAction
+from config import Config
 import json
 import asyncio
 from datetime import datetime
-
-def get_cfg(cfg, prop, default=None, required=False):
-	res = default
-	try:
-		res = cfg[prop]
-	except:
-		if required:
-			print(f"{prop} must be specified in configuration file.")
-			exit(1)
-	return res
 
 async def main(uri, spot_params, respot_time):
 	tci_listener = Listener(uri)
@@ -36,13 +27,11 @@ async def main(uri, spot_params, respot_time):
 		else:
 			ready = False
 
-with open("example_config.json", mode="r") as cf:
-	cfg = json.load(cf)
-
-uri = get_cfg(cfg, "uri", required=True)
-saved_stations_file = get_cfg(cfg, "saved_stations_file", required=True)
-respot_time = get_cfg(cfg, "respot_time", default=60)
-spot_color = get_cfg(cfg, "spot_color", default="#aa2222")
+cfg = Config("example_config.json")
+uri = cfg.get("uri", required=True)
+saved_stations_file = cfg.get("saved_stations_file", required=True)
+respot_time = cfg.get("respot_time", default=60)
+spot_color = cfg.get("spot_color", default="#aa2222")
 
 color_val = int("0xFF" + spot_color.lstrip("#"), 16)
 

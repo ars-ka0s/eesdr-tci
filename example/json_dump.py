@@ -1,6 +1,6 @@
 from eesdr_tci.Listener import Listener
+from config import Config
 import asyncio
-import json
 
 params_dict = {"system":{},"receivers":{}}
 
@@ -31,7 +31,7 @@ async def printer(uri):
 	await tci_listener.ready()
 	print(json.dumps(params_dict))
 
-with open("example_config.json", mode="r") as cf:
-	uri = json.load(cf)["uri"]
+cfg = Config("example_config.json")
+uri = cfg.get("uri", required=True)
 
 asyncio.run(printer(uri))
