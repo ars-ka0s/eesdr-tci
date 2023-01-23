@@ -4,5 +4,8 @@
 	"sample_format": 0,
 	"saved_stations_file": "stations.sbj",
 	"spot_color": "#AA2222",
-	"respot_time": 60
+	"respot_time": 60,
+	"scanner_file": "stations.sbj",
+	"scanner_wait_time": 1.0,
+	"scanner_hold_time": 3.0
 }
