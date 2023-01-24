@@ -8,3 +8,22 @@ version = "0.0.1"
 dependencies = [
 	"websockets"
 ]
+authors = [
+	{ name="Matthew R. McDougal", email="ka0s@arrl.net"}
+]
+description = "Python package to interact with Expert Electronics SDR TCI control interface."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Development Status :: 3 - Alpha",
+	"Framework :: AsyncIO",
+	"Intended Audience :: Developers",
+	"License :: OSI Approved :: BSD License",
+	"Operating System :: OS Independent",
+	"Topic :: Communications :: Ham Radio"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ars-ka0s/eesdr-tci"
+"Bug Tracker" = "https://github.com/ars-ka0s/eesdr-tci/issues"
