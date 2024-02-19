@@ -20,7 +20,7 @@ async def main(uri, spot_params, respot_time):
 		print(datetime.now().ctime())
 		for p in spot_params:
 			await tci_listener.send(tci.COMMANDS["SPOT"].prepare_string(TciCommandSendAction.WRITE, params=p))
-		print(f"Spotting {p[0]}")
+			print(f"Spotting {p[0]}")
 
 		if respot_time:
 			await asyncio.sleep(respot_time)

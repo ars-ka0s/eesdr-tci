@@ -57,7 +57,7 @@ class TciCommand:
 			return f"{uc_command}:{param_str};"
 
 COMMANDS = {cmd.name: cmd for cmd in [
-	# Initialization Type Commands - TCI Protocol 1.9 - Section 5.1
+	# Initialization Type Commands - TCI Protocol 2.0 - Section 4.1
 	# All these should be readable = False, writeable = False
 	TciCommand("VFO_LIMITS",              readable = False, writeable = False, param_count = 2),
 	TciCommand("IF_LIMITS",               readable = False, writeable = False, param_count = 2),
@@ -68,7 +68,7 @@ COMMANDS = {cmd.name: cmd for cmd in [
 	TciCommand("MODULATIONS_LIST",        readable = False, writeable = False, param_count = -1),
 	TciCommand("PROTOCOL",                readable = False, writeable = False, param_count = 2),
 	TciCommand("READY",                   readable = False, writeable = False, param_count = 0),
-	# Bidirectional Control Commands - TCI Protocol 1.9 - Section 5.2
+	# Bidirectional Control Commands - TCI Protocol 2.0 - Section 4.2
 	# All these should be readable = True, writeable = True
 	TciCommand("START",                   readable = False, param_count = 0),
 	TciCommand("STOP",                    readable = False, param_count = 0),
@@ -111,7 +111,9 @@ COMMANDS = {cmd.name: cmd for cmd in [
 	TciCommand("LOCK",                    has_rx = True),
 	TciCommand("SQL_ENABLE",              has_rx = True),
 	TciCommand("SQL_LEVEL",               has_rx = True),
-	# Unidirectional Control Commands - TCI Protocol 1.9 - Section 5.3
+	TciCommand("DIGL_OFFSET"),
+	TciCommand("DIGU_OFFSET"),
+	# Unidirectional Control Commands - TCI Protocol 2.0 - Section 4.3
 	# All these should be readable = False, writeable = True/False depending on semantics
 	TciCommand("TX_ENABLE",               readable = False, writeable = False, has_rx = True),
 	TciCommand("CW_MACROS_SPEED_UP",      readable = False),
@@ -130,7 +132,11 @@ COMMANDS = {cmd.name: cmd for cmd in [
 	TciCommand("LINE_OUT_RECORDER_SAVE",  readable = False, has_rx = True),
 	TciCommand("LINE_OUT_RECORDER_BREAK", readable = False, has_rx = True, param_count = 0),
 	TciCommand("SPOT_CLEAR",              readable = False, param_count = 0),
-	# Notification Commands - TCI Protocol 1.9 - Section 5.4
+	TciCommand("AUDIO_STREAM_SAMPLE_TYPE",readable = False),
+	TciCommand("AUDIO_STREAM_CHANNELS",   readable = False),
+	TciCommand("AUDIO_STREAM_SAMPLES",    readable = False),
+	TciCommand("TX_STREAM_AUDIO_BUFFERING", readable = False),
+	# Notification Commands - TCI Protocol 2.0 - Section 4.4
 	# All these should be readable = False, writeable = False, but a few commands are mixed into this section
 	TciCommand("CLICKED_ON_SPOT",         readable = False, writeable = False, param_count = 2),
 	TciCommand("RX_CLICKED_ON_SPOT",      readable = False, writeable = False, has_rx = True, has_sub_rx = True, param_count = 2),
@@ -141,15 +147,12 @@ COMMANDS = {cmd.name: cmd for cmd in [
 	TciCommand("KEYER",                   readable = False, writeable = False, has_rx = True),
 	TciCommand("RX_SENSORS_ENABLE",       readable = False, param_count = 2),
 	TciCommand("TX_SENSORS_ENABLE",       readable = False, param_count = 2),
-	TciCommand("RX_SENSORS",              readable = False, writeable = False, has_rx = True),
+	TciCommand("RX_SENSORS",              readable = False, writeable = False, has_rx = True), # Deprecated in 2.0
 	TciCommand("TX_SENSORS",              readable = False, writeable = False, has_rx = True, param_count = 4),
-	# New Commands - TCI Protocol 1.9 - Section 5.5
-	TciCommand("AUDIO_STREAM_SAMPLE_TYPE", readable = False),
-	TciCommand("AUDIO_STREAM_CHANNELS",    readable = False),
-	TciCommand("AUDIO_STREAM_SAMPLES",     readable = False),
-	TciCommand("DIGL_OFFSET"),
-	TciCommand("DIGU_OFFSET"),
-	# CW Macros - TCI Protocl 1.9 - Section 4.2.1
+	# New Commands - TCI Protocol 2.0 - Section 4.5
+	TciCommand("VFO_LOCK",                readable = False, writeable = False, has_rx = True, has_sub_rx = True),
+	TciCommand("RX_CHANNEL_SENSORS",      readable = False, writeable = False, has_rx = True, has_sub_rx = True),
+	# CW Macros - TCI Protocl 2.0 - Section 3.2.1
 	TciCommand("CW_MACROS",               readable = False, has_rx = True),
 	TciCommand("CW_TERMINAL",             readable = False),
 	TciCommand("CW_MACROS_EMPTY",         readable = False, writeable = False, param_count = 0),
