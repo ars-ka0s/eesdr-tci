@@ -23,16 +23,16 @@ class TciCommand:
 		uc_command = self.name.upper()
 
 		if action == TciCommandSendAction.READ and not self.readable:
-			raise ValueError(f"Command {command} not readable.")
+			raise ValueError(f"Command {uc_command} not readable.")
 
 		if action == TciCommandSendAction.WRITE and not self.writeable:
-			raise ValueError(f"Command {command} not writeable.")
+			raise ValueError(f"Command {uc_command} not writeable.")
 
 		if self.has_rx and (rx is None or type(rx) is not int or rx < 0):
-			raise ValueError(f"Command {command} requires specifying applicable receiver number (positive integer)")
+			raise ValueError(f"Command {uc_command} requires specifying applicable receiver number (positive integer)")
 
 		if self.has_sub_rx and (sub_rx is None or type(sub_rx) is not int or sub_rx < 0):
-			raise ValueError(f"Command {command} requires specifying applicable sub-receiver/channel number (positive integer)")
+			raise ValueError(f"Command {uc_command} requires specifying applicable sub-receiver/channel number (positive integer)")
 
 		if check_params:
 			if action == TciCommandSendAction.READ and self.param_count > 0:
@@ -41,7 +41,7 @@ class TciCommand:
 				expected = self.param_count
 
 			if len(params) != expected:
-				raise ValueError(f"Command {command} requires {expected} additional parameters to {action.name}, {len(params)} given.")
+				raise ValueError(f"Command {uc_command} requires {expected} additional parameters to {action.name}, {len(params)} given.")
 
 		cmd_params = []
 		if self.has_rx:
