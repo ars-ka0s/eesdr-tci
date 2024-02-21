@@ -8,5 +8,6 @@
 	"scanner_file": "stations.sbj",
 	"scanner_wait_time": 1.0,
 	"scanner_hold_time": 3.0,
-	"ctcss_process_rate": 3
+	"ctcss_process_rate": 3,
+	"cw_macros_default": "sample.cwm"
 }
