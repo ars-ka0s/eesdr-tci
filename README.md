@@ -16,3 +16,7 @@ Until everything stabilizes, take a look at the [example](https://github.com/ars
 * `scanner.py`: moves between a list of stations and pauses if squelch is broken
 * `direwolf_interface.py`: provides a pure TCI interface to the [direwolf](https://github.com/wb2osz/direwolf) packet soundmodem. (Note: currently, this requires building a modified version which can pipe the transmit audio, see [this branch](https://github.com/ars-ka0s/direwolf/tree/stdout-audio) if interested.)
 * `ctcss_decode.py`: listens for CTCSS/PL tones in receiver audio and prints possible matches.
+* `cw_macro_keyer.py`: 12-button CW macro keyer with freeform text box and speed adjustment.
+![cw_macro_keyer_screenshot](https://github.com/ars-ka0s/eesdr-tci/assets/26339355/f0f62cdf-df23-4ae8-964d-130457132516)
+* `contest_memo.py`: Use the spotting feature to leave notes to yourself during unassissted contest activites.
+![contest_memo_screenshot](https://github.com/ars-ka0s/eesdr-tci/assets/26339355/f4114a63-4407-4760-939b-192a45bfb3ae)
