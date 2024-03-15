@@ -162,7 +162,7 @@ class Listener:
     async def _launch_tasks(self):
         """Coroutine that initiates connection and creates listener/sender tasks."""
         try:
-            async with websockets.client.connect(self.uri) as ws:
+            async with websockets.connect(self.uri) as ws:
                 listen_task = asyncio.create_task(self._listen_main(ws))
                 sender_task = asyncio.create_task(self._sender_main(ws))
                 self._connected_event.set()
