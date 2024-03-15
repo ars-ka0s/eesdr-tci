@@ -5,20 +5,15 @@ from . import tci
 class Listener:
     def __init__(self, uri):
         self.uri = uri
-
-    _tci_params = {"system":{}, "receivers":{}}
-
-    _tci_param_listeners = {}
-    _tci_data_listeners = {}
-    _cb_tasks = set()
-
-    _tci_send = None
-
-    _listen_task = None
-    _sender_task = None
-
-    _connected_event = None
-    _ready_event = None
+        self._tci_params = {"system":{}, "receivers":{}}
+        self._tci_param_listeners = {}
+        self._tci_data_listeners = {}
+        self._cb_tasks = set()
+        self._tci_send = None
+        self._listen_task = None
+        self._sender_task = None
+        self._connected_event = None
+        self._ready_event = None
 
     @staticmethod
     def _convert_type(val):
