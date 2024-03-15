@@ -1,6 +1,5 @@
 from enum import IntEnum
 import struct
-import array
 
 class TciCommand:
     def __init__(self, name, readable = True, writeable = True, has_rx = False, has_sub_rx = False, param_count = 1):
@@ -19,7 +18,7 @@ class TciCommand:
             params += 1
         return params
 
-    def prepare_string(self, action, rx = None, sub_rx = None, params = [], check_params = True):
+    def prepare_string(self, action, rx = None, sub_rx = None, params = (), check_params = True):
         uc_command = self.name.upper()
 
         if action == TciCommandSendAction.READ and not self.readable:
@@ -28,11 +27,19 @@ class TciCommand:
         if action == TciCommandSendAction.WRITE and not self.writeable:
             raise ValueError(f"Command {uc_command} not writeable.")
 
-        if self.has_rx and (rx is None or type(rx) is not int or rx < 0):
-            raise ValueError(f"Command {uc_command} requires specifying applicable receiver number (positive integer)")
+        if self.has_rx:
+            try:
+                rx = int(rx)
+                assert rx >= 0
+            except (TypeError, ValueError, AssertionError) as exc:
+                raise ValueError(f"Command {uc_command} requires specifying applicable receiver number (nonnegative integer)") from exc
 
-        if self.has_sub_rx and (sub_rx is None or type(sub_rx) is not int or sub_rx < 0):
-            raise ValueError(f"Command {uc_command} requires specifying applicable sub-receiver/channel number (positive integer)")
+        if self.has_sub_rx:
+            try:
+                sub_rx = int(sub_rx)
+                assert sub_rx  >= 0
+            except (TypeError, ValueError, AssertionError) as exc:
+                raise ValueError(f"Command {uc_command} requires specifying applicable sub-receiver/channel number (nonnegative integer)") from exc
 
         if check_params:
             if action == TciCommandSendAction.READ and self.param_count > 0:
@@ -52,9 +59,9 @@ class TciCommand:
 
         if len(cmd_params) == 0:
             return f"{uc_command};"
-        else:
-            param_str = ",".join(cmd_params)
-            return f"{uc_command}:{param_str};"
+
+        param_str = ",".join(cmd_params)
+        return f"{uc_command}:{param_str};"
 
 COMMANDS = {cmd.name: cmd for cmd in [
     # Initialization Type Commands - TCI Protocol 2.0 - Section 4.1
