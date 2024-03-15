@@ -1,6 +1,5 @@
 import asyncio
 import websockets
-import functools
 from . import tci
 
 class Listener:
