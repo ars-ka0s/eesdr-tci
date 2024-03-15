@@ -16,7 +16,6 @@ class Listener:
         self._tci_params = {"system":{}, "receivers":{}}
         self._tci_param_listeners = {}
         self._tci_data_listeners = {}
-        self._cb_tasks = set()
         self._tci_send = None
         self._listen_task = None
         self._sender_task = None
@@ -28,12 +27,12 @@ class Listener:
         """Converts a string to int, float, or bool if possible, but returning the string if not."""
         try:
             return int(val)
-        except:
+        except (ValueError, TypeError):
             pass
 
         try:
             return float(val)
-        except:
+        except (ValueError, TypeError):
             pass
 
         if val.upper() == "TRUE":
@@ -128,14 +127,13 @@ class Listener:
     def _schedule_callback(self, callback, *callback_args):
         """Schedules a notification callback, ensuring that the status is checked when complete."""
         task = asyncio.create_task(callback(*callback_args))
-        self._cb_tasks.add(task)
-        task.add_done_callback(self._callback_complete)
+        task.add_done_callback(lambda task: task.result())
 
     async def _listen_main(self, ws):
         """Coroutine that maintains parameter cache and schedules data/parameter callbacks."""
         while True:
             status = await ws.recv()
-            if type(status) is bytes:
+            if isinstance(status, bytes):
                 packet = tci.TciDataPacket.from_buf(status)
                 for callback in self._get_data_listeners(packet.data_type):
                     self._schedule_callback(callback, packet)
