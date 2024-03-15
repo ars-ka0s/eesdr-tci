@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from eesdr_tci import tci
-from eesdr_tci.Listener import Listener
+from eesdr_tci.listener import Listener
 from eesdr_tci.tci import TciCommandSendAction
 
 from config import Config

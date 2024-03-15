@@ -7,7 +7,7 @@ from tkinter import filedialog, ttk, messagebox
 import sys
 
 from eesdr_tci import tci
-from eesdr_tci.Listener import Listener
+from eesdr_tci.listener import Listener
 from eesdr_tci.tci import TciCommandSendAction
 
 from config import Config
