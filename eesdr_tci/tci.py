@@ -1,8 +1,19 @@
+"""The tci module contains the constants, classes, and enums used to format commands and interact
+with TCI audio and data streams.
+"""
+
 from enum import IntEnum
 import struct
 
 class TciCommand:
-    def __init__(self, name, readable = True, writeable = True, has_rx = False, has_sub_rx = False, param_count = 1):
+    """TciCommand instances define the individual commands that can be sent to or received from a
+    TCI server and are used to check parameters and produce command strings.  The COMMANDS dict
+    contains preconfigured TciCommand instances for currently-known commands retrievable by their
+    name as key.
+    """
+
+    def __init__(self, name, readable = True, writeable = True,
+                 has_rx = False, has_sub_rx = False, param_count = 1):
         self.name = name
         self.readable = readable
         self.writeable = writeable
@@ -11,6 +22,7 @@ class TciCommand:
         self.param_count = param_count
 
     def total_params(self):
+        """Return the total number of parameters that should be present in a command string."""
         params = self.param_count
         if self.has_rx:
             params += 1
@@ -19,6 +31,7 @@ class TciCommand:
         return params
 
     def prepare_string(self, action, rx = None, sub_rx = None, params = (), check_params = True):
+        """Prepares a command string for sending using the provided values & parameters."""
         uc_command = self.name.upper()
 
         if action == TciCommandSendAction.READ and not self.readable:
@@ -183,22 +196,29 @@ COMMANDS = {cmd.name: cmd for cmd in [
 ]}
 
 class TciCommandSendAction(IntEnum):
+    """TciCommandSendAction defines whether a parameter update is being requested (READ)
+    or sent to the device (WRITE)."""
     READ = 0
     WRITE = 1
 
 class TciStreamType(IntEnum):
+    """TciStreamType defines the type of data stream contained in a data packet."""
     IQ_STREAM = 0
     RX_AUDIO_STREAM = 1
     TX_AUDIO_STREAM = 2
     TX_CHRONO = 3
 
 class TciSampleType(IntEnum):
+    """TciSampleType defines the type of individual samples of data contained in a data packet."""
     INT16 = 0
     INT24 = 1
     INT32 = 2
     FLOAT32 = 3
 
 class TciDataPacket:
+    """TciDataPacket instances are used to contain received data packets or define outgoing data packets.
+    """
+
     def __init__(self, rx, sample_rate, data_format, codec, crc, length, data_type, channels, data):
         self.rx = rx
         self.sample_rate = sample_rate
@@ -212,6 +232,7 @@ class TciDataPacket:
 
     @classmethod
     def from_buf(cls, buf):
+        """Produces a TciDataPacket instance by decoding a raw recevied data buffer."""
         vals = struct.unpack_from("<8I", buf)
         rx = vals[0]
         sample_rate = vals[1]
@@ -229,6 +250,7 @@ class TciDataPacket:
         return cls(rx, sample_rate, data_format, codec, crc, length, data_type, channels, data)
 
     def to_bytes(self):
+        """Returns the raw bytes required to represent a TciDataPacket instance."""
         if self.data_format == TciSampleType.INT16:
             bytes_per_sample = 2
         elif self.data_format == TciSampleType.INT24:
