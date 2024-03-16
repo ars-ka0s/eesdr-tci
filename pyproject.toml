@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eesdr-tci"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
 	"websockets"
 ]
@@ -16,7 +16,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
 	"Programming Language :: Python :: 3",
-	"Development Status :: 3 - Alpha",
+	"Development Status :: 4 - Beta",
 	"Framework :: AsyncIO",
 	"Intended Audience :: Developers",
 	"License :: OSI Approved :: BSD License",
